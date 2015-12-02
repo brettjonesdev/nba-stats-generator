@@ -1,6 +1,5 @@
 var nba = require('nba');
 var _ = require('underscore');
-var Promise = require( "es6-promise" ).Promise;
 var dao = require('./dao');
 var moment = require('moment-timezone');
 var queryString = require('query-string');
@@ -90,66 +89,6 @@ function getRoster(games) {
     return roster;
 }
 module.exports = {
-    getPlayerOnOffStats: function(options) {
-        var player = options.player;
-        var team = options.team;
-        var perMode = options.perMode || "Per48";
-        return new Promise(function(resolve, reject) {
-            var traditional = nba.api.teamPlayerOnOff({teamId:team.teamId, perMode:perMode});
-            var advanced = nba.api.teamPlayerOnOff({teamId:team.teamId, perMode:perMode, measureType: "Advanced"});
-            var misc = nba.api.teamPlayerOnOff({teamId:team.teamId, perMode:perMode, measureType: "Misc"});
-            var fourFactors = nba.api.teamPlayerOnOff({teamId:team.teamId, perMode:perMode, measureType: "Four Factors"});
-            var scoring = nba.api.teamPlayerOnOff({teamId:team.teamId, perMode:perMode, measureType: "Four Factors"});
-            var opponent = nba.api.teamPlayerOnOff({teamId:team.teamId, perMode:perMode, measureType: "Opponent"});
-
-            Promise.all([traditional, advanced, misc, fourFactors, scoring, opponent]).then(function(results) {
-                traditional = results[0];
-                advanced = results[1];
-                misc = results[2];
-                fourFactors = results[3];
-                scoring = results[4];
-                opponent = results[5];
-
-                resolve(getPlayerOnOffStats(team, player, [traditional, advanced, misc, fourFactors, scoring], opponent));
-            }).catch(reject);
-        });
-    },
-
-    getPlayerSplits: function(options) {
-        var player = options.player;
-        var team = options.team;
-        var perMode = options.perMode || "Per48";
-        return new Promise(function(resolve, reject) {
-            console.log("perMode", perMode);
-            var traditional = nba.api.playerSplits({playerId:player.playerId, perMode:perMode});
-            var advanced = nba.api.playerSplits({playerId:player.playerId, perMode:perMode, measureType: "Advanced"});
-            //var shooting = nba.api.playerSplits({playerId:player.playerId, perMode:perMode, measureType: "Shooting"});
-            var scoring = nba.api.playerSplits({playerId:player.playerId, perMode:perMode, measureType: "Scoring"});
-            var usage = nba.api.playerSplits({playerId:player.playerId, perMode:perMode, measureType: "Usage"});
-            //TODO misc, etc.?? Also, 2013-2014????
-
-            /*
-            var opponent = nba.api.playerSplits({playerId:player.playerId, perMode:perMode, measureType: "Opponent"});
-*/
-            Promise.all([traditional,advanced,scoring, usage]).then(function(results) {
-                traditional = results[0];
-                advanced = results[1];
-                scoring = results[2];
-                usage = results[3];
-
-                console.log(usage);
-                //misc = results[2];
-                //shooting = results[3];
-                //opponent = results[6];
-
-                resolve(results)
-            }).catch(reject);
-        });
-    },
-    getPlayerCharts: function(options) {
-        return new Promise(function(resolve, reject){resolve()});
-    },
-
     getGameStats: function(game, team, date, refresh, callback, error) {
         console.log("Searching MongoDB for game " + game.gameId);
         if ( refresh ) {
@@ -287,39 +226,6 @@ module.exports = {
                 });
         });
         return promise;
-    },
-
-    getPlayerStats: function(options) {
-        var service = this;
-        return new Promise(function(resolve, reject) {
-            var player = options.player;
-            var team = options.team;
-            var teamStatsWith = service.getTeamAverages(_.extend({}, options, {with: [player.playerId], without:[]}));
-            var teamStatsWithout = service.getTeamAverages(_.extend({}, options, {without: [player.playerId], with:[]}));
-            Promise.all([teamStatsWith, teamStatsWithout]).then(function(results) {
-                var withStats = results[0];
-                var withoutStats = results[1];
-                var deltas = {us:{}, them:{}};
-                _.each(withStats.averages.us, function(withVal, key) {
-                    var withoutVal = withoutStats.averages.us[key];
-                    deltas.us[key] = withVal - withoutVal;
-                });
-                _.each(withStats.averages.them, function(withVal, key) {
-                    var withoutVal = withoutStats.averages.them[key];
-                    deltas.them[key] = withVal - withoutVal;
-                });
-
-
-                var data = {
-                    team: team,
-                    player: player,
-                    with: withStats,
-                    without: withoutStats,
-                    deltas: deltas
-                };
-                resolve(data);
-            }).catch(reject)
-        });
     },
 
     getGameIfNotInDao: function(game, team, date) {
@@ -764,39 +670,6 @@ function getGameFlowChartData(playByPlay, teams, game) {
         playDesc
     ];
 }
-
-function getPlayerOnOffStats(team, player, onOffArray, opponent) {
-    var playerOnCourt = {};
-    var playerOffCourt = {};
-
-    _.each(onOffArray, function(stats) {
-        var playerOn = _.findWhere(stats.playersOnCourtTeamPlayerOnOffDetails, {vsPlayerId: player.playerId});
-        var playerOff = _.findWhere(stats.playersOffCourtTeamPlayerOnOffDetails, {vsPlayerId: player.playerId});
-        playerOnCourt = _.defaults(playerOnCourt, playerOn);
-        playerOffCourt = _.defaults(playerOffCourt, playerOff);
-    });
-
-    var playerOffOpp = _.findWhere(opponent.playersOffCourtTeamPlayerOnOffDetails, {vsPlayerId:player.playerId})
-    var playerOnOpp = _.findWhere(opponent.playersOnCourtTeamPlayerOnOffDetails, {vsPlayerId:player.playerId})
-
-    addAdvancedStats(playerOnCourt, playerOnOpp);
-    addAdvancedStats(playerOffCourt, playerOffOpp);
-
-    var deltas = {};
-    _.each(playerOnCourt, function(withVal, key) {
-        var withoutVal = playerOffCourt[key];
-        deltas[key] = withVal - withoutVal;
-    });
-
-    return {
-        player: player,
-        team: team,
-        with: playerOnCourt,
-        without: playerOffCourt,
-        deltas: deltas
-    }
-}
-
 
 
 /*

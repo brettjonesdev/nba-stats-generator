@@ -1,7 +1,6 @@
 var nba = require('nba');
 var _ = require('underscore');
 var moment = require('moment');
-var Promise = require( "es6-promise" ).Promise;
 var service = require('./service');
 var templates = require('./templates');
 
@@ -30,77 +29,8 @@ module.exports = {
         }
     },
 
-    player: function(req, res) {
-        var teamName = req.param('team');
-        var team = getTeam(teamName);
-        var playerName = req.param('player');
-        var player = getPlayer(playerName);
-
-        var options = _.extend(req.query, {team: team, player: player});
-        service.getPlayerStats(options).then(function(data) {
-            var html = templates.get('playerAverages')(data);
-            res.send(html);
-        }).catch(function(e){onError(e, res)});
-    },
-
-    playerImpact: function(req,res) {
-        var teamName = req.param('team');
-        var team = getTeam(teamName);
-        var playerName = req.param('player');
-        var player = getPlayer(playerName);
-
-        var options = _.extend(req.query, {team: team, player: player});
-        var onOff = service.getPlayerOnOffStats(options);
-        var playerSplits = service.getPlayerSplits(options);
-        var playerCharts = service.getPlayerCharts(options);
-        Promise.all([onOff, playerSplits, playerCharts]).then(function(results) {
-            onOff = results[0];
-            playerSplits = results[1];
-            playerCharts = results[2];
-
-            var html = templates.get('playerImpact')({
-                player: player,
-                team: team,
-                onOff: onOff,
-                options: options,
-                playerSplits: playerSplits,
-                playerCharts: playerCharts
-            });
-            res.send(html);
-        }).catch(function(e){onError(e, res)});
-
-
-    },
-    /*getPlayerImpact: function(req,res) {
-        var name = req.param('name');
-        var playerName = req.param('playerName');
-        var player = nba.playerIdFromName(playerName);
-        if ( !player ) {
-            var msg = "Could not find player " + playerName;
-            console.log(msg);
-            res.send(msg);
-        }
-        try {
-            var team = getTeam(name);
-            console.log("Looking up player impact for " + playerName);
-
-            var options = {
-                team: team,
-                player: player,
-                season: req.param("season") ? true : false,
-                playoffs: req.param("playoffs") ? true : false
-            };
-
-            Øservice.getTeamAverages(options).then(function(data) {
-                var html = templates.get('teamAverages')(data);
-                res.send(html);
-            }, onError);
-
-        } catch(e) {
-            onError(e, res);
-        }
-    },*/
     getGameStats: function(req,res,next) {
+        console.log("Whatever");
         var name = req.param('name');
         var date = req.param('date');
         var refresh = req.param('refresh');
