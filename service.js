@@ -122,7 +122,7 @@ module.exports = {
         //TODO need season and year
         var team = options.team;
 
-        var dates = getSeasonDates(year);
+        var dates = getSeasonDates(options.year);
         var start = dates[options.season].start;
         var end = dates[options.season].end;
 

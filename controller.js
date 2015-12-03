@@ -48,7 +48,7 @@ module.exports = {
             getLastGameForTeam(team.teamId, date, function(game) {
                 service.getGameStats(game, team, date, refresh, function(data) {
                     if (_.isObject(data) ){
-                        var html = templates.get('page')(data);
+                        var html = templates.get('game')(data);
                     } else {
                         html = data;
                     }

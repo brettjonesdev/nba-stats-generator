@@ -1,6 +1,5 @@
 var express = require('express');
 var app = express();
-require('./apiExtensions');
 var nba = require('nba');
 var controller = require('./controller');
 
