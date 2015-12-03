@@ -94,14 +94,14 @@ module.exports = {
         if ( refresh ) {
             this.getGameStatsFromApi(game, team, date).then(callback, error);
         } else {
-            dao.getGames({gameId: game.gameId, teamId: team.teamId}, _.bind(function(results) {
+            dao.getGames({gameId: game.gameId, teamId: team.teamId}, (results) => {
                 if ( results.length ) {
                     console.log("Found game " + game.gameId + "in DB");
                     callback(results[0]);
                 } else {
                     this.getGameStatsFromApi(game, team, date).then(callback, error);
                 }
-            }, this), function(err) {
+            }, (err) => {
                 if ( err ) {
                     error(err);
                 }
@@ -230,7 +230,7 @@ module.exports = {
 
     getGameIfNotInDao: function(game, team, date) {
         var service = this;
-        var promise = new Promise(function(resolve, reject) {
+        var promise = new Promise((resolve, reject) => {
             dao.getGames({gameId: game.gameId, teamId: team.teamId}, function(results, err) {
                 if ( err ) {
                     console.trace(err);
@@ -249,6 +249,10 @@ module.exports = {
         return promise;
     }
 };
+
+function callApi(method, options) {
+
+}
 
 function filterGamesByPlayersWith(games, withPlayers) {
     return _.filter(games, function(game) {
