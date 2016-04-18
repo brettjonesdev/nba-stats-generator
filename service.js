@@ -21,7 +21,7 @@ function getSeasonDates(year) {
         end: moment("04-15-" + year)
     };
     dates[SEASON_PLAYOFFS] = {
-        start: moment("04-18" + year),
+        start: moment("04-17" + year),
         end: moment("07-01-" + year)
     };
     return dates;
